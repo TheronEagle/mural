@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mural Web - Learn Chinese through conversation</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div id="app">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Mural</h1>
+                <p>The language app you eventually delete</p>
+            </div>
+            <nav class="sidebar-nav">
+                <button id="talkBtn" class="nav-btn active">Talk</button>
+                <button id="wordsBtn" class="nav-btn">Words</button>
+                <button id="themesBtn" class="nav-btn">Themes</button>
+                <button id="settingsBtn" class="nav-btn">Settings</button>
+            </nav>
+        </div>
+        <div class="main-content">
+            <div id="talkView" class="view active">
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="meaning-section" id="meaningSection">
+                        <div id="meaningText" class="meaning-text">Tap to see meaning...</div>
+                        <div id="meaningLoading" class="meaning-loading">⟳</div>
+                        <div id="meaningError" class="meaning-error"></div>
+                    </div>
+                    <div class="chat-input">
+                        <div id="micBtn" class="input-btn" title="Speak">🎤</div>
+                        <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off" />
+                        <div id="sendBtn" class="input-btn">→</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="wordsView" class="view">
+                <h2>Your Words</h2>
+                <div class="filters">
+                    <label>
+                        <input type="checkbox" id="showNewOnly"> Show New/Fragile only
+                    </label>
+                </div>
+                <div id="wordsList" class="words-list">
+                    <div class="words-empty">Start chatting to see your vocabulary grow here.</div>
+                </div>
+            </div>
+            
+            <div id="themesView" class="view">
+                <h2>Conversation Themes</h2>
+                <div id="themesGrid" class="themes-grid"></div>
+            </div>
+            
+            <div id="settingsView" class="view">
+                <h2>Settings</h2>
+                <div class="settings-section">
+                    <h3>Language</h3>
+                    <div class="setting">
+                        <label>Learning language:</label>
+                        <select id="languageSelect">
+                            <option value="zh">Mandarin Chinese</option>
+                            <option value="es">Spanish</option>
+                            <option value="en">English</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="it">Italian</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="nb">Norwegian</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label>Meaning language:</label>
+                        <select id="meaningLanguageSelect">
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Norwegian">Norwegian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Session</h3>
+                    <div class="setting">
+                        <label>Session length (minutes):</label>
+                        <input type="number" id="sessionLength" min="5" max="60" value="15">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Data</h3>
+                    <button id="exportDataBtn" class="settings-btn">Export Learning Data</button>
+                    <button id="importDataBtn" class="settings-btn">Import Learning Data</button>
+                    <button id="clearDataBtn" class="settings-btn danger">Clear All Data</button>
+                </div>
+                <div class="settings-section">
+                    <h3>AI Provider</h3>
+                    <div class="setting">
+                        <label>Provider:</label>
+                        <select id="aiProviderSelect">
+                            <option value="openrouter">OpenRouter (Free)</option>
+                            <option value="workersai">Cloudflare Workers AI</option>
+                            <option value="huggingface">Hugging Face</option>
+                            <option value="groq">Groq</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label>API Key (if required):</label>
+                        <input type="password" id="apiKeyInput" placeholder="Enter API key if needed">
+                    </div>
+                    <div class="setting">
+                        <label>Model:</label>
+                        <input type="text" id="modelInput" placeholder="e.g., meta-llama/llama-3.3-70b-instruct:free">
+                    </div>
+                </div>
+                <button id="saveSettingsBtn" class="settings-btn primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modalOverlay" class="modal-overlay">
+        <div id="modal" class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle"></h3>
+                <button id="modalClose">&times;</button>
+            </div>
+            <div id="modalContent" class="modal-body"></div>
+        </div>
+    </div>
+    
+    <script type="module" src="/src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "mural-web",
+  "version": "1.0.0",
+  "description": "Mural - The language app you eventually delete. Web-based, free AI provider.",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site, no build needed'",
+    "deploy": "npx wrangler pages deploy ."
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

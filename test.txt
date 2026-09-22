@@ -1,0 +1,5 @@
+# Mural Web Test
+
+This is a test to see if the static file server is working.
+
+If you can see this, the server is running correctly.
