@@ -2,8 +2,9 @@ name = "mural-web"
 main = "workers-site/index.js"
 compatibility_date = "2025-01-01"
 
-# Static site served from the Workers Static Assets store.
-# `npm run build` assembles the minimal browser bundle into public/.
+# `public/` is committed (CI runs `npx wrangler deploy` with no build step) and
+# contains only the browser bundle. Regenerate it with `npm run build`; the
+# `npm test` drift check fails if it falls out of sync with source.
 [assets]
 directory = "./public"
 binding = "ASSETS"
