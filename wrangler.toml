@@ -1,10 +1,18 @@
 name = "mural-web"
-main = "workers-site/index.js"
+main = "src/api/chat.js"
 compatibility_date = "2025-01-01"
 
+# Route API calls to the Worker
+routes = [
+  "/api/*"
+]
+
+# Pages config for static files
 [site]
 bucket = "."
 
+# Environment variables (set these via wrangler secret)
+# OPENROUTER_API_KEY - Free OpenRouter API key
 [vars]
 AI_PROVIDER = "openrouter"
 AI_MODEL = "meta-llama/llama-3.3-70b-instruct"
