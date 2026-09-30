@@ -1,0 +1,9 @@
+{
+  "name": "Mural - Language Learning",
+  "short_name": "Mural",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "description": "Learn languages through real conversation"
+}
