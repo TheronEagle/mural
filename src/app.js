@@ -68,7 +68,7 @@ let state = {
   isListening: false,
   apiConfig: {
     provider: 'openrouter',
-    apiKey: '',
+    apiKey: null,
     model: 'meta-llama/llama-3.3-70b-instruct:free'
   }
 };
@@ -106,7 +106,13 @@ async function init() {
       console.error('Failed to parse session:', e);
     }
   }
-  
+
+  // Load stored API key if exists
+  const savedApiKey = localStorage.getItem('muralApiKey');
+  if (savedApiKey) {
+    state.apiConfig.apiKey = savedApiKey;
+  }
+
   // Initialize meaning controller
   state.meaningController = new MeaningController({
     delay: 450,
@@ -279,20 +285,31 @@ async function getAIResponse() {
 }
 
 async function callAIAPI(prompt) {
-  // In a real implementation, this would use the actual API config
-  // For now, we'll simulate or use a simple fallback
-  
   // Try to use the actual API if configured
   if (state.apiConfig.apiKey && state.apiConfig.provider !== 'none') {
     try {
-      // This would call our worker or directly to the provider
-      // For demo purposes, we'll simulate
-      return await simulateAIResponse(prompt);
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instructions: prompt,
+          input: '',
+          search: false
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.text || "I didn't get a response. Try again?";
     } catch (error) {
       console.warn('API call failed, falling back to simulation:', error);
     }
   }
-  
+
   // Fallback to simulated response
   return await simulateAIResponse(prompt);
 }
@@ -549,11 +566,17 @@ function saveSettings() {
   state.preferences.meaningLanguage = elements.meaningLanguageSelect.value;
   state.preferences.sessionMinutes = parseInt(elements.sessionLength.value) || 15;
   state.preferences.interests = document.getElementById('userInterests')?.value || '';
-  
+
   state.apiConfig.provider = elements.aiProviderSelect.value;
   state.apiConfig.model = elements.modelInput.value;
-  // API key handled separately
-  
+
+  // Read API key from input if provided
+  const apiKey = elements.apiKeyInput.value.trim();
+  if (apiKey) {
+    state.apiConfig.apiKey = apiKey
+    localStorage.setItem('muralApiKey', apiKey);
+  }
+
   // Save preferences
   localStorage.setItem('muralPrefs', JSON.stringify(state.preferences));
   
