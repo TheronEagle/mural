@@ -1,18 +1,14 @@
 name = "mural-web"
-main = "src/api/chat.js"
+main = "workers-site/index.js"
 compatibility_date = "2025-01-01"
 
-# Route API calls to the Worker
-routes = [
-  "/api/*"
-]
+# Static site served from the Workers Static Assets store.
+# `npm run build` assembles the minimal browser bundle into public/.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
 
-# Pages config for static files
-[site]
-bucket = "."
-
-# Environment variables (set these via wrangler secret)
-# OPENROUTER_API_KEY - Free OpenRouter API key
 [vars]
 AI_PROVIDER = "openrouter"
-AI_MODEL = "meta-llama/llama-3.3-70b-instruct"
+AI_MODEL = "meta-llama/llama-3.3-70b-instruct:free"

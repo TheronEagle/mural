@@ -45,7 +45,6 @@ const elements = {
   clearDataBtn: document.getElementById('clearDataBtn'),
   
   aiProviderSelect: document.getElementById('aiProviderSelect'),
-  apiKeyInput: document.getElementById('apiKeyInput'),
   modelInput: document.getElementById('modelInput'),
   
   saveSettingsBtn: document.getElementById('saveSettingsBtn'),
@@ -69,7 +68,6 @@ let state = {
   isListening: false,
   apiConfig: {
     provider: 'openrouter',
-    apiKey: null,
     model: 'meta-llama/llama-3.3-70b-instruct:free'
   }
 };
@@ -108,12 +106,6 @@ async function init() {
     }
   }
 
-  // Load stored API key if exists
-  const savedApiKey = localStorage.getItem('muralApiKey');
-  if (savedApiKey) {
-    state.apiConfig.apiKey = savedApiKey;
-  }
-
   // Initialize meaning controller
   state.meaningController = new MeaningController({
     delay: 450,
@@ -121,6 +113,9 @@ async function init() {
   });
   state.meaningController._onResult = handleMeaningResult;
   
+  // Restore the saved conversation mode (default: live)
+  state.apiConfig.provider = state.preferences.mode || 'openrouter';
+
   // Setup event listeners
   setupEventListeners();
   
@@ -297,33 +292,33 @@ async function getAIResponse() {
 }
 
 async function callAIAPI(prompt) {
-  // Try to use the actual API if configured
-  if (state.apiConfig.apiKey && state.apiConfig.provider !== 'none') {
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instructions: prompt,
-          input: '',
-          search: false
-        })
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(err.error || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.text || "I didn't get a response. Try again?";
-    } catch (error) {
-      console.warn('API call failed, falling back to simulation:', error);
-    }
+  if (state.apiConfig.provider === 'none') {
+    return await simulateAIResponse(prompt);
   }
 
-  // Fallback to simulated response
-  return await simulateAIResponse(prompt);
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        instructions: prompt,
+        input: '',
+        search: false
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(err.error || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.text || "I didn't get a response. Try again?";
+  } catch (error) {
+    console.warn('API call failed, falling back to simulation:', error);
+    showToast('Live model unavailable — using offline replies.');
+    return await simulateAIResponse(prompt);
+  }
 }
 
 async function simulateAIResponse(prompt) {
@@ -395,9 +390,8 @@ function handleMeaningResult(request, result) {
 }
 
 async function translateText(request) {
-    // Use the same /api/chat endpoint for translation
-    if (!state.apiConfig.apiKey) {
-        return { text: "Translation requires an API key. Set it in Settings.", inputTokens: 0, outputTokens: 0 };
+    if (state.apiConfig.provider === 'none') {
+        return { text: 'Translation is off in this mode.', inputTokens: 0, outputTokens: 0 };
     }
 
     try {
@@ -440,7 +434,7 @@ async function assessConversation() {
     const fullPrompt = `${assessmentPrompt}\n\n${context}`;
 
     // Try real assessment via API
-    if (state.apiConfig.apiKey && state.apiConfig.provider !== 'none') {
+    if (state.apiConfig.provider !== 'none') {
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -654,13 +648,7 @@ function saveSettings() {
 
   state.apiConfig.provider = elements.aiProviderSelect.value;
   state.apiConfig.model = elements.modelInput.value;
-
-  // Read API key from input if provided
-  const apiKey = elements.apiKeyInput.value.trim();
-  if (apiKey) {
-    state.apiConfig.apiKey = apiKey
-    localStorage.setItem('muralApiKey', apiKey);
-  }
+  state.preferences.mode = state.apiConfig.provider;
 
   // Save preferences
   localStorage.setItem('muralPrefs', JSON.stringify(state.preferences));

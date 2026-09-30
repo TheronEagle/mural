@@ -109,23 +109,18 @@
                     <button id="clearDataBtn" class="settings-btn danger">Clear All Data</button>
                 </div>
                 <div class="settings-section">
-                    <h3>AI Provider</h3>
+                    <h3>Conversation model</h3>
                     <div class="setting">
-                        <label>Provider:</label>
+                        <label>Mode:</label>
                         <select id="aiProviderSelect">
-                            <option value="openrouter">OpenRouter (Free)</option>
-                            <option value="workersai">Cloudflare Workers AI</option>
-                            <option value="huggingface">Hugging Face</option>
-                            <option value="groq">Groq</option>
+                            <option value="openrouter">Live model (server-side key)</option>
+                            <option value="none">Offline practice (canned replies, no network)</option>
                         </select>
+                        <p class="setting-note">The model key is stored as a Cloudflare secret on the server, never in this browser. If live replies fail, Mural falls back to offline practice automatically.</p>
                     </div>
                     <div class="setting">
-                        <label>API Key (if required):</label>
-                        <input type="password" id="apiKeyInput" placeholder="Enter API key if needed">
-                    </div>
-                    <div class="setting">
-                        <label>Model:</label>
-                        <input type="text" id="modelInput" placeholder="e.g., meta-llama/llama-3.3-70b-instruct:free">
+                        <label>Model (server default shown for reference):</label>
+                        <input type="text" id="modelInput" readonly placeholder="meta-llama/llama-3.3-70b-instruct:free">
                     </div>
                 </div>
                 <button id="saveSettingsBtn" class="settings-btn primary">Save Settings</button>

@@ -1,123 +1,65 @@
-# Mural Web - Complete Implementation Summary
+# Mural Web
 
-I've successfully rebuilt the Mural iOS/Android app as a web-based application that you can deploy to Cloudflare Workers. Here's what was created:
+Mural rebuilt as a static web app and a single Cloudflare Worker.
 
-## Core Logic Ported from Swift to JavaScript:
+## Architecture
 
-### 1. Data Models (`src/lib/models.js`)
-- Fragment, Passage, Speaker, EvidenceKind, Outcome enums
-- WordProposal, Assessment, SourceLink, TopicBrief, SessionRecord
-- Preferences, Archive (simplified for localStorage)
-- All core data structures preserved
+- **Static site** — plain HTML/CSS/JS, no framework, no bundler. `npm run build`
+  assembles the minimal browser bundle into `public/`.
+- **Worker** (`workers-site/index.js`) — serves the static assets from the
+  Workers Static Assets binding and proxies `POST /api/chat` to OpenRouter.
 
-### 2. Teaching Policy (`src/lib/teaching-policy.js`)
-- All system prompts from TeachingPolicy.swift ported exactly
-- voice(), assessment(), greeting(), checkIn(), help(), redirect()
-- theme(), translation(), delegation(), typedReply(), lookup()
-- currentTopic(), context() - all maintaining the original logic
+The model API key is a **Cloudflare secret**, never a browser field. The client
+only ever talks to this app's own `/api/chat`.
 
-### 3. Learning Engine (`src/lib/learning-engine.js`)
-- WordState, LearnerState structures
-- validate() and project() functions with spaced repetition algorithm
-- Vocabulary tracking with bars (0-3) and due dates
-- Independent/assisted/understanding/lapse evidence tracking
+## Commands
 
-### 4. Conversation Pace (`src/lib/conversation-pace.js`)
-- Delivery guidance system (gentle/natural/extended)
-- Success tracking and pace adjustment logic
+```sh
+npm run build        # assemble public/
+npm test             # Worker request/response contract tests
+npm run deploy       # build + wrangler deploy
+npm run dev:worker   # local Worker on http://127.0.0.1:8788
+npm run dev          # static preview on http://localhost:3000
+```
 
-### 5. Conversation Activity (`src/lib/conversation-activity.js`)
-- Session timing, idle detection, check-in system
-- Same timing constants as original (35s quiet, 15s check-in, etc.)
+## First-time setup
 
-### 6. Meaning Controller (`src/lib/meaning-controller.js`)
-- Debounced translation controller for subtitles
-- Caching and context-aware updates
+```sh
+wrangler secret put OPENROUTER_API_KEY   # paste your openrouter.ai key
+npm run deploy
+```
 
-### 7. Language Modules (`src/languages/index.js`)
-- All 8 languages: Norwegian, Spanish, English, French, German, Italian, Portuguese, Mandarin
-- Complete with teachingFocus, writingGuidance, speechGuidance
-- Mandarin theme overrides for coffee, groceries, travel, cabin, traditions
-- MeaningLanguages with greetings in 11 languages
+Without the secret, `/api/chat` returns a clear 500 explaining what to set; the
+app then falls back to offline practice replies.
 
-### 8. Themes (`src/lib/themes.js`)
-- All 24 conversation themes with situations, symbols, categories
-- Theme lookup and rendering system
+## Offline practice mode
 
-## Web Application Components:
+Settings offers a mode switch:
 
-### 1. API Layer (`src/api/chat.js`)
-- Cloudflare Workers handler for `/api/chat`
-- OpenRouter API integration (free tier compatible)
-- Structured output handling for assessments
-- Search/tool use simulation
+- **Live model** — proxied to OpenRouter through the Worker.
+- **Offline practice** — canned per-language replies, no network calls.
 
-### 2. Frontend (`src/app.js`)
-- Single-page application with Vue-like reactivity
-- Four main views: Talk, Words, Themes, Settings
-- Real-time chat with message bubbles
-- Meaning/subtitle toggle
-- Vocabulary cards with spaced repetition display
-- Theme selection grid
-- Settings persistence via localStorage
-- Data import/export functionality
+Useful on a plane, and for testing the UI without spending tokens.
 
-### 3. UI Styling (`styles.css`)
-- Clean, mobile-responsive design
-- Chat interface with user/assistant message styling
-- Meaning section with loading states
-- Vocabulary cards with color-coded bars
-- Theme cards with symbols
-- Settings form with validation
-- Toast notifications and modals
+## What is real vs. stubbed
 
-### 4. Project Files
-- `package.json` - npm dependencies (serve for testing)
-- `wrangler.toml` - Cloudflare Workers configuration
-- `index.html` - main entry point
-- `src/index.js` - worker entry point
+Real:
 
-## How to Use:
+- Conversation, translation, and assessment all call the live model.
+- Adaptive difficulty (`ConversationPace`) and spaced-repetition vocabulary
+  (`LearningEngine`) are the ports of the original Swift logic and run on real
+  model output.
+- Onboarding, session timer, PWA install, import/export.
 
-1. **For Local Testing:**
-   ```bash
-   cd mural-web
-   python3 -m http.server 3000  # or use npx serve
-   ```
-   Then visit http://localhost:3000
+Stubbed:
 
-2. **For Cloudflare Deployment:**
-   ```bash
-   # Get free API key from https://openrouter.ai/keys
-   wrangler secret put OPENROUTER_API_KEY
-   wrangler pages publish .
-   ```
+- Web Speech recognition depends on browser support (Chrome/Safari yes,
+  Firefox no). Falls back to typing.
+- Assessment asks for JSON and tolerates parse failure by falling back.
 
-3. **Learning Chinese:**
-   - The app defaults to Mandarin Chinese
-   - Speak or type in the chat
-   - Get responses in Chinese with optional English meanings
-   - Vocabulary tracked automatically with spaced repetition
-   - Conversation adapts to your level (0-5 scale)
-   - 24 themes to choose from (coffee, travel, work, etc.)
+## Tests
 
-## Features Working:
-- ✅ Conversation in Mandarin (or any of 8 languages)
-- ✅ Adaptive difficulty based on your responses
-- ✅ Vocabulary tracking with spaced repetition (New→Fragile→Growing→Steady)
-- ✅ Meaning/subtitle toggle
-- ✅ 24 conversation themes
-- ✅ Settings persistence (language, session length, etc.)
-- ✅ Data import/export
-- ✅ Free AI provider (OpenRouter) - no paid API needed
-- ✅ Ready for Cloudflare Workers deployment
-
-## What's Simulated (for demo):
-- Actual AI calls (uses simulated responses for testing)
-- Speech recognition (mic button shows concept)
-- Real translation API (meaning shows placeholder)
-- Structured assessment output (simulated)
-
-To get real AI responses, get a free API key from OpenRouter and set it via `wrangler secret put OPENROUTER_API_KEY`.
-
-The app is now ready for you to learn Chinese through conversation without Xcode, sudo, or paid APIs!
+`npm test` runs `scripts/test-worker.mjs`, which stubs the upstream provider and
+asserts the Worker's contract: method guards, body validation, secret handling,
+header forwarding, and — the regression that caused Cloudflare error 1101 — that
+a request with no `ASSETS` binding returns a response instead of throwing.

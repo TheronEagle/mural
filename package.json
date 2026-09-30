@@ -4,14 +4,16 @@
   "description": "Mural - The language app you eventually delete. Web-based, free AI provider.",
   "type": "module",
   "scripts": {
-    "dev": "npx serve .",
-    "build": "echo 'Static site, no build needed'",
-    "deploy": "npx wrangler pages deploy ."
+    "dev": "node scripts/build-static.mjs && npx serve public",
+    "build": "node scripts/build-static.mjs",
+    "deploy": "npm run build && npx wrangler deploy",
+    "dev:worker": "npm run build && npx wrangler dev",
+    "test": "node scripts/test-worker.mjs"
   },
   "dependencies": {
     "serve": "^14.2.0"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "wrangler": "^4.0.0"
   }
 }
